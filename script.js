@@ -107,9 +107,34 @@ function updateCard(data) {
   }
 }
 
+async function tryRestAPI() {
+  try {
+    const res = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`);
+    const json = await res.json();
+    if (json.success && json.data) {
+      updateCard(json.data);
+      return true;
+    }
+  } catch (_) {}
+  return false;
+}
+
+function showNotTracked() {
+  const loading = document.getElementById('dc-loading');
+  if (loading) loading.innerHTML = `
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <p style="color:#666;font-size:12px;text-align:center;max-width:180px">Profil en cours de synchronisation…<br/>Réessai dans quelques secondes.</p>
+  `;
+}
+
 function connectLanyard() {
   const ws = new WebSocket('wss://api.lanyard.rest/socket');
   let heartbeat;
+  let gotData = false;
+
+  const fallbackTimeout = setTimeout(() => {
+    if (!gotData) showNotTracked();
+  }, 6000);
 
   ws.onmessage = (e) => {
     const msg = JSON.parse(e.data);
@@ -121,7 +146,15 @@ function connectLanyard() {
 
     if (msg.op === 0) {
       const payload = msg.t === 'INIT_STATE' ? msg.d[DISCORD_ID] : msg.d;
-      if (payload) updateCard(payload);
+      if (payload) {
+        gotData = true;
+        clearTimeout(fallbackTimeout);
+        updateCard(payload);
+      } else if (msg.t === 'INIT_STATE') {
+        clearTimeout(fallbackTimeout);
+        showNotTracked();
+        setTimeout(tryRestAPI, 10000);
+      }
     }
   };
 
@@ -133,4 +166,6 @@ function connectLanyard() {
   ws.onerror = () => ws.close();
 }
 
-if (document.getElementById('dc-card')) connectLanyard();
+if (document.getElementById('dc-card')) {
+  tryRestAPI().then(ok => { if (!ok) connectLanyard(); else connectLanyard(); });
+}
