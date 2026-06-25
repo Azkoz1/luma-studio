@@ -49,14 +49,21 @@ function updateCard(data) {
   // Username
   document.getElementById('dc-username').textContent = discord_user?.global_name || discord_user?.username || 'Arthuxx';
 
-  // Banner
+  // Banner — hash from Lanyard or banner_color fallback
+  const bannerEl = document.getElementById('dc-banner');
   if (discord_user?.banner) {
-    const bannerEl = document.getElementById('dc-banner');
     const ext = discord_user.banner.startsWith('a_') ? 'gif' : 'png';
-    bannerEl.style.backgroundImage = `url(https://cdn.discordapp.com/banners/${discord_user.id}/${discord_user.banner}.${ext}?size=480)`;
-    bannerEl.style.backgroundSize = 'cover';
-    bannerEl.style.backgroundPosition = 'center';
-    bannerEl.classList.add('has-bg');
+    const url = `https://cdn.discordapp.com/banners/${discord_user.id}/${discord_user.banner}.${ext}?size=480`;
+    const img = new Image();
+    img.onload = () => {
+      bannerEl.style.backgroundImage = `url(${url})`;
+      bannerEl.style.backgroundSize = 'cover';
+      bannerEl.style.backgroundPosition = 'center top';
+      bannerEl.innerHTML = '';
+    };
+    img.src = url;
+  } else if (discord_user?.banner_color) {
+    bannerEl.style.background = discord_user.banner_color;
     bannerEl.innerHTML = '';
   }
 
