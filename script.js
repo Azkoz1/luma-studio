@@ -27,6 +27,13 @@ const DISCORD_ID = '814881628018966599';
 
 const STATUS_LABELS = { online: 'En ligne', idle: 'Inactif', dnd: 'Ne pas déranger', offline: 'Hors ligne' };
 
+function resolveAssetUrl(str, appId) {
+  if (!str) return null;
+  if (str.startsWith('mp:')) return 'https://media.discordapp.net/' + str.slice(3);
+  if (appId) return `https://cdn.discordapp.com/app-assets/${appId}/${str}.png`;
+  return null;
+}
+
 function updateCard(data) {
   const loading = document.getElementById('dc-loading');
   const content = document.getElementById('dc-content');
@@ -46,26 +53,40 @@ function updateCard(data) {
     avatarEl.src = `https://cdn.discordapp.com/embed/avatars/${(BigInt(discord_user?.id || 0) >> 22n) % 6n}.png`;
   }
 
-  // Username
+  // Username + handle
   document.getElementById('dc-username').textContent = discord_user?.global_name || discord_user?.username || 'Arthuxx';
+  const handleEl = document.getElementById('dc-handle');
+  if (discord_user?.username) handleEl.textContent = discord_user.username;
 
-  // Banner — hash from Lanyard or banner_color fallback
-  const bannerEl = document.getElementById('dc-banner');
-  if (discord_user?.banner) {
-    const ext = discord_user.banner.startsWith('a_') ? 'gif' : 'png';
-    const url = `https://cdn.discordapp.com/banners/${discord_user.id}/${discord_user.banner}.${ext}?size=480`;
-    const img = new Image();
-    img.onload = () => {
-      bannerEl.style.backgroundImage = `url(${url})`;
-      bannerEl.style.backgroundSize = 'cover';
-      bannerEl.style.backgroundPosition = 'center top';
-      bannerEl.innerHTML = '';
-    };
-    img.src = url;
-  } else if (discord_user?.banner_color) {
-    bannerEl.style.background = discord_user.banner_color;
-    bannerEl.innerHTML = '';
+  // Avatar decoration
+  const decoEl = document.getElementById('dc-avatar-deco');
+  if (discord_user?.avatar_decoration_data?.asset) {
+    const asset = discord_user.avatar_decoration_data.asset;
+    decoEl.src = `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png`;
+    decoEl.style.display = 'block';
   }
+
+  // Guild tag (LUMA)
+  const guildEl = document.getElementById('dc-guild-tag');
+  if (discord_user?.primary_guild?.tag) {
+    const guildId = discord_user.primary_guild.identity_guild_id;
+    const badge = discord_user.primary_guild.badge;
+    guildEl.style.display = 'inline-flex';
+    guildEl.innerHTML = badge
+      ? `<img src="https://cdn.discordapp.com/icons/${guildId}/${badge}.png?size=16" alt="" class="dc-guild-icon" /> ${discord_user.primary_guild.tag}`
+      : discord_user.primary_guild.tag;
+  }
+
+  // Banner — Lanyard ne retourne pas le hash, on utilise l'image statique
+  const bannerEl = document.getElementById('dc-banner');
+  const staticBanner = 'assets/banner.png';
+  const bannerImg = new Image();
+  bannerImg.onload = () => {
+    bannerEl.style.backgroundImage = `url(${staticBanner})`;
+    bannerEl.style.backgroundSize = 'cover';
+    bannerEl.style.backgroundPosition = 'center top';
+  };
+  bannerImg.src = staticBanner;
 
   // Status dot
   const dot = document.getElementById('dc-status-dot');
@@ -102,12 +123,16 @@ function updateCard(data) {
   // Game activity
   const activityEl = document.getElementById('dc-activity');
   const game = activities.find(a => a.type === 0 || a.type === 1 || a.type === 2);
-  if (game && !listening_to_spotify) {
+  if (game) {
     activityEl.style.display = 'block';
+    const iconUrl = resolveAssetUrl(game.assets?.large_image, game.application_id);
     document.getElementById('dc-activity-inner').innerHTML = `
-      <p class="dc-game-name">${game.name}</p>
-      ${game.details ? `<p class="dc-game-details">${game.details}</p>` : ''}
-      ${game.state ? `<p class="dc-game-state">${game.state}</p>` : ''}
+      ${iconUrl ? `<img src="${iconUrl}" alt="" class="dc-activity-img" onerror="this.style.display='none'" />` : '<div class="dc-activity-icon">🎮</div>'}
+      <div>
+        <p class="dc-game-name">${game.name}</p>
+        ${game.details ? `<p class="dc-game-details">${game.details}</p>` : ''}
+        ${game.state ? `<p class="dc-game-state">${game.state}</p>` : ''}
+      </div>
     `;
   } else {
     activityEl.style.display = 'none';

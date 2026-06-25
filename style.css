@@ -288,15 +288,25 @@ body {
 
 /* Activity */
 .dc-activity-inner { display: flex; align-items: flex-start; gap: 10px; }
-.dc-activity-icon {
-  width: 48px; height: 48px; border-radius: 8px;
-  background: #2b2d31; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px;
-}
+.dc-activity-img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.dc-activity-icon { width: 48px; height: 48px; border-radius: 8px; background: #2b2d31; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 24px; }
 .dc-game-name { font-weight: 700; color: #f2f3f5; font-size: 13px; }
 .dc-game-details { font-size: 11px; color: #b5bac1; margin-top: 3px; }
 .dc-game-state { font-size: 11px; color: #80848e; margin-top: 2px; }
+
+/* Avatar decoration overlay */
+.dc-avatar-deco { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); pointer-events: none; z-index: 2; }
+
+/* Username row + guild tag */
+.dc-username-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
+.dc-handle { font-size: 11px; color: #80848e; margin-bottom: 4px; }
+.dc-guild-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #2b2d31; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px; padding: 1px 6px;
+  font-size: 11px; font-weight: 700; color: #b5bac1;
+}
+.dc-guild-icon { width: 12px; height: 12px; border-radius: 2px; }
 
 .dc-status-label-row { margin-top: 4px; }
 .dc-status-label { font-size: 11px; font-weight: 600; color: #80848e; }
