@@ -79,7 +79,7 @@ function updateCard(data) {
 
   // Banner — Lanyard ne retourne pas le hash, on utilise l'image statique
   const bannerEl = document.getElementById('dc-banner');
-  const staticBanner = 'assets/banner.png';
+  const staticBanner = '../assets/banner.png';
   const bannerImg = new Image();
   bannerImg.onload = () => {
     bannerEl.style.backgroundImage = `url(${staticBanner})`;
